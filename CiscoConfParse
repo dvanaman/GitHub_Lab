@@ -1,0 +1,54 @@
+
+Installing ciscoconfparse
+
+ciscoconfparse needs Python versions 2.6, 2.7 or 3.2+; the OS should not matter. If you want to run it under a Python virtualenv, it’s been heavily tested in that environment as well.
+
+You can check your python version with the -V switch...
+
+[mpenning@Mudslide ~]$ python -V
+Python 2.7.3
+[mpenning@Mudslide ~]$
+
+The best way to get ciscoconfparse is with pip or setuptools.
+Install with pip
+
+If you already have pip, you can install as usual:
+
+Alternatively you can install with pip:
+
+pip install --upgrade ciscoconfparse
+
+If you have a specific version of ciscoconfparse in mind, you can specify that at the command-line
+
+pip install ciscoconfparse==1.2.37
+
+Install with setuptools
+
+If you don’t have pip, you can use setuptools...
+
+# Substitute whatever ciscoconfparse version you like...
+easy_install -U ciscoconfparse
+
+If you have a specific version of ciscoconfparse in mind, you can specify that at the command-line
+
+easy_install -U ciscoconfparse==1.2.37
+
+Install from the source
+
+If you don’t have either pip or setuptools, you can download the ciscoconfparse compressed tarball, extract it and run the setup.py script in the tarball:
+
+python setup.py install
+
+Github and Bitbucket
+
+If you’re interested in the source, you can always pull from the github repo or bitbucket repo:
+
+    From bitbucket (this also assumes you have mercurial):
+
+    hg init
+    hg clone https://bitbucket.org/mpenning/ciscoconfparse
+
+    From github:
+
+    git clone git://github.com//mpenning/ciscoconfparse
+
