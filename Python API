@@ -1,0 +1,389 @@
+Python API
+
+This chapter describes how to use the Python API for the Cisco Nexus 7000 series device.
+
+This chapter contains the following sections:
+
+    Finding Feature Information
+    Information About the Python API
+    Using Python
+    Online Help for Scripts
+
+Finding Feature Information
+
+Your software release might not support all the features documented in this module. For the latest caveats and feature information, see the Bug Search Tool at https:/​/​tools.cisco.com/​bugsearch/​ and the release notes for your software release. To find information about the features documented in this module, and to see a list of the releases in which each feature is supported, see the “New and Changed Information” chapter.
+Information About the Python API
+
+Python is an easy to learn, powerful programming language. It has efficient high-level data structures and a simple but effective approach to object-oriented programming. Python's elegant syntax and dynamic typing, together with its interpreted nature, make it an ideal language for scripting and rapid application development in many areas on most platforms.
+
+The Python interpreter and the extensive standard library are freely available in source or binary form for all major platforms from the Python website:
+
+http://www.python.org/
+
+The same site also contains distributions of and pointers to many free third-party Python modules, programs and tools, and additional documentation.
+
+The Cisco Nexus 7000 Series devices support Python v2.7.2 in both interactive and noninteractive (script) modes.
+
+The Python scripting capability on the Cisco Nexus 7000 Series devices gives programmatic access to the switch command line interface (CLI) to perform various tasks and Power-On Auto Provisioning (POAP) or Embedded Event Manager (EEM) actions.
+
+Note	
+Beginning with Cisco NX-OS Release 6.2(8), the system supports the JavaScript Object Notation (JSON) and logging modules.
+
+The Python interpreter is available by default in the Cisco NX-OS software.
+Using Python
+
+This section describes how to write and execute Python scripts.
+
+Note	
+Beginning with Cisco NX-OS Release 6.2(8), you can perform Python network operations in other VRFs, not just the management VRF.
+
+    Importing Python Libraries
+    Using the CLI Command APIs
+    Invoking the Python Interpreter from the CLI
+    Changing the VRF Assignment
+    Display Formats
+    Nonpersistence of the Python Interpreter
+    Noninteractive Python
+    Running a Script in the Background
+
+Importing Python Libraries
+
+To run CLI commands in Python, the cisco module must be imported. The cisco module contains the code that integrates with the CLI.
+
+The functions contained in the cisco module that enable the CLI commands are imported automatically when you use the python command to invoke the Python interactive mode or when you use the source command when invoking the Python non-interactive mode.
+
+Note	
+Beginning with Cisco NX-OS Release 6.2(8), you can import the hashlib library as well.
+Using the CLI Command APIs
+
+For Cisco Nexus 7000 Series devices, the Python programming language uses three APIs that can execute CLI commands. These APIs are described in the following table. The arguments for these APIs are strings of CLI commands. To execute a CLI command through the Python interpreter, you enter the CLI command as an argument string of one of the following APIs:
+
+API
+	
+
+Description
+cli()
+
+Example:
+
+string = cli (“cli-command”)
+
+	
+
+Returns the raw output of CLI commands, including control/special characters.
+Note    	
+
+The interactive Python interpreter prints control/special characters 'escaped'. This means that a carriage return is printed as '\n' giving results that might be difficult to read. The clip() API gives results that are more readable.
+clid()
+
+Example:
+
+dictionary = clid (“cli-command”) 
+
+	
+
+For CLI commands that support XML, this API returns the command output as a Python dictionary.
+
+This API can be useful when searching the output of show commands.
+clip()
+
+Example:
+
+clip (“cli-command”)
+
+	
+
+Prints the output of the CLI command directly to stdout and returns nothing to Python.
+Note    	
+
+clip (“cli-command”)
+
+is equivalent to
+
+r=cli(“cli-command”)
+print r
+
+Invoking the Python Interpreter from the CLI
+
+The following example shows how to invoke Python from the CLI.
+
+Note	
+
+The Python interpreter is designated with the ">>>" or "…" prompt.
+
+switch# show clock                                           
+23:54:55.872 UTC Wed May 16 2012                             
+switch# python                          !-- Enter Python interpreter
+switch# >>> cli("conf term ; interface loopback 1")          
+switch(config-if)# >>> cli("ip address 1.1.1.1/24")          
+switch(config-if)# >>> cli("exit")      !-- Exit the CLI interface mode
+switch(config)# >>> cli("exit")                              
+switch# >>> i=0                                              
+switch# >>> while i<8:                                       
+switch# ...   i=i+1                     !-- Composite command; prompt indicates more input
+switch# ...   cmd = "show module %i" % i                     
+switch# ...   r=clid(cmd)                                    
+switch# ...   if "TABLE_modinfo/model" in r.keys():          
+switch# ...     if r["TABLE_modinfo/model"] == "Nurburgring":
+switch# ...       print "got a racer in slot %d" % i         
+switch# ...                             !-- Empty input indicates end of loop
+got a racer in slot 3                                        
+switch# >>> exit                        ! -- Exit Python interpreter          
+switch#                                                      
+
+Changing the VRF Assignment
+
+Beginning with Cisco NX-OS Release 6.2(8), you can select the VRF to perform Python network operations. By default, the network operations in Python are in the management VRF. Prior to using the networking and socket APIs, use the following command to change the VRF:
+
+switch# python
+switch# >>> import socket                    
+switch# >>> set_vrf ('default')                         
+switch# >>> s = socket.socket (socket.AF_INET, socket.SOCK_STREAM)
+
+You can change the VRF to any other VRF.
+Display Formats
+
+The following examples show various display formats using the Python APIs.
+
+Example 1
+
+switch# >>> cli("conf ; interface loopback 1")
+Enter configuration commands, one per line.  End with CNTL/Z 
+switch(config-if)# >>> clip('where detail‘)
+
+   mode:                conf
+                         interface loopback1
+  username:            root
+  vdc:                 switch
+  routing-context vrf: default
+
+
+Example 2
+
+switch# >>> cli("conf ; interface loopback 1")
+Enter configuration commands, one per line.  End with CNTL/Z
+switch(config-if)# >>> cli('where detail')
+
+'\x1b[00m  mode:                conf\n                         interface loopback1\n  username:            root\n  vdc:                 switch\n  routing-context vrf: default\n'
+
+
+Example 3
+
+switch# >>> cli("conf ; interface loopback 1")
+Enter configuration commands, one per line.  End with CNTL/Z 
+switch(config-if)# >>> r = cli('where detail') ; print r
+
+(same output as clip() above!)
+   mode:                conf
+                         interface loopback1
+  username:            root
+  vdc:                 switch
+  routing-context vrf: default
+
+
+Example 4
+
+switch# >>> cli("conf ; interface loopback 1")
+Enter configuration commands, one per line.  End with CNTL/Z 
+switch(config-if)# >>> i=0
+switch(config-if)# >>> while i<3:
+switch(config-if)# ...   i=i+1
+switch(config-if)# ...   cli('ip addr 1.1.1.1/24')
+switch(config-if)# ...
+switch(config-if)# >>> cli('end')
+switch# >>> r = clid('show version')
+switch# >>> for k in r.keys():
+switch# ...  print "%30s" % k, " = %s" % r[k]
+switch# ...
+             cpu_name  = Intel(R) Xeon(R) CPU
+           rr_sys_ver  = 6.2(0.110)
+         manufacturer  = Cisco Systems, Inc.
+       isan_file_name  = bootflash:///full
+             rr_ctime  = Wed May 16 02:40:57 2012
+        proc_board_id  = JAF1417AGCB
+       bios_cmpl_time  = 02/20/10
+    kickstart_ver_str  = 6.1(1) [build 6.1(0.292)] [gdb]
+          isan_tmstmp  = 05/16/2012 02:26:02
+switch# >>> exit
+
+Example 5
+
+This example displays the raw output of CLI commands, including control and special characters, to Python. For example, the carriage return is displayed as \n.
+
+switch# >>> cli('show vrf')
+
+
+'VRF-Name                      VRF-ID State              Reason
+\ndefault                        1      Up                 --
+\nmanagement                     2      Up                 --     \n'
+switch# >>>
+
+Entering the command clip, returns "void" to Python but prints the same output to std.
+
+Example 6
+
+This example displays a dictionary of the attribute-name/value to Python.
+
+switch# >>> clid('show vrf')
+{'TABLE_vrf/vrf_id'; '1', 'TABLE_vrf/vrf_reason': '--',  'TABLE_vrf/vrf_name': 'default', 'TABLE_vrf/vrf_state': 'Up'}
+switch# >>> cli
+
+Nonpersistence of the Python Interpreter
+
+Python is forked from the CLI shell, this means that:
+
+    No state is preserved between invocations of the Python interpreter.
+
+    The CLI mode is lost when exiting the Python interpreter.
+
+The following example shows the nonpersistence of the Python interpreter.
+
+switch# python            !-- Invoke Python interpreter
+switch# >>> i = 2                    
+switch# >>> print "var i = %d" % i   
+var i = 2                            
+switch# >>> cli("configure terminal")
+switch(config)# >>> blabla                 
+switch(config)# >>> exit           !-- Exit Python interpreter
+switch#                            !-- CLI still in exec mode (conf t is lost)
+switch# python                     !-- Invoke new Python interpreter
+switch# >>> print "var i = %d" % i !-- Previous Python interpreter and variables are lost          
+Error: variable 'i' undefined.       
+switch# >>> exit                     
+switch# conf t ; inter lo 1   
+switch(config-if)# python          !-- Invoke new Python interpreter
+switch(config-if)# >>>             !-- Inherits the CLI mode (forked from CLI)
+
+Noninteractive Python
+
+The following example shows a script and how to run it.
+
+Note	
+
+The bootflash:scripts directory is the default script directory. All scripts must be stored in the bootflash:scripts directory or in a subdirectory of it.
+
+Note	
+
+You can run a tcl script instead of a Python script by inserting #!/bin/env tclsh before the first line in the example and replacing all occurrences of the Python script filename with the tcl script filename.
+
+switch# show file bootflash:scripts/test1.py !-- bootflash:scripts directory
+                                            !-- is the default script directory
+#!/bin/env python           !-- Invoke Python to run test1.py script      
+                                                            
+i=0                                                         
+while i<3:                                                  
+  r=clip('show version')                                    
+  uptime_name='/@/show/version/__readonly__/kern_uptm_secs' 
+  print uptime_name, r[uptime_name]                         
+  clid('sleep 1')                                           
+  i=i+1                                                     
+                                                            
+switch# source test1.py     !-- Default directory is /bootflash/scripts
+/@/show/version/__readonly__/kern_uptm_secs 36              
+/@/show/version/__readonly__/kern_uptm_secs 38              
+/@/show/version/__readonly__/kern_uptm_secs 40              
+switch#     
+
+
+The following example shows how a script accepts an argument.
+
+root@switch# source ntimes 2 "show clock"  !-- Pass arguments ‘2’ and 'show clock' to script
+
+>>>> iteration 1 for 'show clock'
+21:27:21.716 UTC Tue Oct 09 2012
+>>>> iteration 2 for 'show clock'
+21:27:21.730 UTC Tue Oct 09 2012
+root@switch# 
+
+Running a Script in the Background
+
+The following example shows how to run a script in the background:
+
+switch# source background sleep 100
+switch# source background sleep 50
+switch# show background
+username   .   terminal   pid    start  time      script args ...
+root  .    .      pts/0    7687  03:31  00:00:00  sleep.py 90  .
+root  .    .      pts/0    7696  03:31  00:00:00  sleep.py 50  .
+switch# kill background ?
+  WORD  Background script to terminate, by process-id or just
+        a regex matching any line from 'show background' output
+
+switch# kill background 7687
+switch# show background
+username   .   terminal   pid    start  time      script args ...
+root  .    .      pts/0    7696  03:31  00:00:00  sleep.py 50  .
+switch#
+switch# exit
+Linux(debug)# su john
+switch# kill background 7696
+bash: line 1: kill: (7696) - Operation not permitted
+switch#
+
+Online Help for Scripts
+
+An online help protocol allows a script to provide online help, man-page, and context sensitive styles:
+
+The following example displays online help for scripts contained in the script directory:
+
+switch# source ?                                                          
+  abc           No help             !-- Script does not support online help protocol
+  cgrep         'context grep': shows matching line plus the context lines
+                (to be used behind a pipe, for show-run type of output)   
+                Example of context for 'ip address 1.1.1.1/24': 'eth 2/1' 
+  find-if       Find interfaces that match selected attribute values      
+                (from 'show intf br')                                     
+  ntimes        Runs specified command specified numbers of times         
+  redo-history  This is run a list of commands from the history again     
+  show-if       Show selected interface attributes                        
+  show-version  A better 'show version'                                   
+  sys/          Directory !-- Directory contains example scripts packaged in image.
+                          !-- These example scripts can be copied to /bootflash for
+                          !-- viewing and modification using the 'source copy-sys' command.
+
+
+The following example displays man-page style online help for the ntimes script:
+
+switch# source ntimes ?               !-- Filename can be abridged if unique (or tabbed) 
+  arg1: the command, in quotes               
+  arg2: number of times to run the commands  
+  <CR>                                       
+  >      Redirect it to a file               
+  >>     Redirect it to a file in append mode
+  |      Pipe command output to filter       
+
+    Online Help Protocol
+
+Online Help Protocol
+
+The script is called with an argument of the form, __cli_script.*help.
+
+There are three different forms for the argument:
+
+    __cli_script_help
+
+    Request to return a one-line description of the script's purpose.
+
+    __cli_script_args_help
+
+    Request to return help for arguments. The filename is passed as the first argument and also any arguments entered so far.
+
+    __cli_script_args_help_partial
+
+    Request to return help for arguments where the last argument is 'partial'.
+
+    For example, interface Ethernet 1/? is 'partial' and context sensitive help would be returned. In this example, interface Ethernet 1/? returns the range of ports for the linecard in slot 1.
+
+The following are the display formats for argument help:
+
+    Classical style ("type|description" style)
+
+    print "ftp|Use ftp for file transfer protocol"
+    print "scp|Use scp for file transfer protocol"
+    exit(0)
+
+    Man page style (no tabbing)
+
+    print "__man_page"
+    print "  whatever…“
+
